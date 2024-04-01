@@ -55,7 +55,9 @@ class ModelArguments:
     mm_vision_select_layer: Optional[int] = field(default=-1)   # default to the last layer
     pretrain_mm_mlp_adapter: Optional[str] = field(default=None)
     pretrain_dino_mm_mlp_adapter: Optional[str] = field(default=None)
+    pretrain_fusion_adapter: Optional[str] = field(default=None)
     mm_projector_type: Optional[str] = field(default='linear')
+    mm_adopter_type: Optional[str] = field(default='cross_attention_8x')
     mm_use_im_start_end: bool = field(default=False)
     mm_use_im_patch_token: bool = field(default=True)
     mm_vision_select_feature: Optional[str] = field(default="patch")
@@ -216,6 +218,23 @@ def safe_save_model_for_hf_trainer(trainer: transformers.Trainer,
                 torch.save(weight_to_save, os.path.join(mm_projector_folder, f'{current_folder}.bin'))
             else:
                 torch.save(weight_to_save, os.path.join(output_dir, f'dino_mm_projector.bin'))
+
+        keys_to_match = ['fusion_adapter']
+        if getattr(trainer.args, "use_im_start_end", False):
+            keys_to_match.extend(['embed_tokens', 'embed_in'])
+        
+        weight_to_save = get_mm_adapter_state_maybe_zero_3(trainer.model.named_parameters(), keys_to_match)
+        trainer.model.config.save_pretrained(output_dir)
+
+        current_folder = output_dir.split('/')[-1]
+        parent_folder = os.path.dirname(output_dir)
+        if trainer.args.local_rank == 0 or trainer.args.local_rank == -1:
+            if current_folder.startswith('checkpoint-'):
+                mm_projector_folder = os.path.join(parent_folder, "fusion_adapter")
+                os.makedirs(mm_projector_folder, exist_ok=True)
+                torch.save(weight_to_save, os.path.join(mm_projector_folder, f'{current_folder}.bin'))
+            else:
+                torch.save(weight_to_save, os.path.join(output_dir, f'fusion_adapter.bin'))
 
         return
 
@@ -912,6 +931,9 @@ def train():
 
             for p in model.get_model().dino_mm_projector.parameters():
                 p.requires_grad = True
+            
+            for p in model.get_model().fusion_adapter.parameters():
+                p.requires_grad = True
 
         model.config.freeze_mm_mlp_adapter = training_args.freeze_mm_mlp_adapter
         if training_args.freeze_mm_mlp_adapter:
@@ -921,9 +943,13 @@ def train():
             for p in model.get_model().dino_mm_projector.parameters():
                 p.requires_grad = False
 
+            for p in model.get_model().fusion_adapter.parameters():
+                p.requires_grad = False
+
         if training_args.bits in [4, 8]:
             model.get_model().mm_projector.to(dtype=compute_dtype, device=training_args.device)
             model.get_model().dino_mm_projector.to(dtype=compute_dtype, device=training_args.device)
+            model.get_model().fusion_adapter.to(dtype=compute_dtype, device=training_args.device)
 
 
         model.config.mm_use_im_start_end = data_args.mm_use_im_start_end = model_args.mm_use_im_start_end

@@ -35,3 +35,5 @@ deepspeed  --include localhost:0,1,2,3,4,5,6,7\
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb
+#   --pretrain_dino_mm_mlp_adapter PATH_TO_DINO_ADAPTER \
+#   --pretrain_fusion_adapter PATH_TO_FUSION_CrossAttention_ADAPTER \

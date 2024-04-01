@@ -30,6 +30,40 @@ class SimpleResBlock(nn.Module):
         return x + self.proj(x)
 
 
+class CrossAttention(nn.Module):
+    def __init__(self, hidden_size, num_heads, depth):
+        super(CrossAttention, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_heads = num_heads
+        self.depth = depth
+        
+        self.layers = nn.ModuleList([
+            nn.MultiheadAttention(hidden_size, num_heads)
+            for _ in range(depth)
+        ])
+        
+        self.query_projection = nn.Linear(hidden_size, hidden_size)
+        self.key_value_projection = nn.Linear(hidden_size, hidden_size)
+        self.output_projection = nn.Linear(hidden_size, hidden_size)
+
+    def forward(self, query, key_value):
+        # Project the query and key_value
+        query = self.query_projection(query)
+        key_value = self.key_value_projection(key_value)
+        
+        # # Expand the dimensions of the query and key_value to match the expected shape
+        # query_expanded = query.unsqueeze(1)  # Shape: (batch_size, 1, hidden_size)
+        # key_value_expanded = key_value.unsqueeze(1)  # Shape: (batch_size, 1, hidden_size)
+        
+        # Perform cross attention for each layer
+        for layer in self.layers:
+            query, _ = layer(query, key_value, key_value, need_weights=False)
+        
+        # Project the output and remove the extra dimension
+        output = self.output_projection(query)
+        
+        return output
+
 def build_vision_projector(config, delay_load=False, **kwargs):
     projector_type = getattr(config, 'mm_projector_type', 'linear')
 
@@ -49,3 +83,17 @@ def build_vision_projector(config, delay_load=False, **kwargs):
         return IdentityMap()
 
     raise ValueError(f'Unknown projector type: {projector_type}')
+
+
+def build_vision_adopter(config, delay_load=False, **kwargs):
+    adopter_type = getattr(config, 'mm_adopter_type', 'cross_attention_1x')
+
+    if adopter_type == 'identity':
+        return IdentityMap()
+    
+    cross_attention_match = re.match(r'^cross_attention_(\d+)x$', adopter_type)
+    if cross_attention_match:
+        depth = int(cross_attention_match.group(1))
+        return CrossAttention(config.hidden_size, 32, depth)
+
+    raise ValueError(f'Unknown adopter type: {adopter_type}')
