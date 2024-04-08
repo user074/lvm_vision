@@ -102,6 +102,7 @@ class LlavaMetaModel:
 
         self.config.use_mm_proj = True
         self.config.mm_projector_type = getattr(model_args, 'mm_projector_type', 'linear')
+        self.config.mm_adopter_type = getattr(model_args, 'mm_adopter_type', 'cross_attention_1x')
         self.config.mm_hidden_size = vision_tower.hidden_size
         self.config.mm_vision_select_layer = mm_vision_select_layer
         self.config.mm_vision_select_feature = mm_vision_select_feature
@@ -132,6 +133,7 @@ class LlavaMetaModel:
             self.dino_mm_projector.load_state_dict(get_w(dino_mm_projector_weights, 'dino_mm_projector'))
         
         if pretrain_fusion_adapter is not None:
+            print("Loading pretrained Fusion adpater!!!")
             fusion_adapter_weights = torch.load(pretrain_fusion_adapter, map_location='cpu')
             def get_w(weights, keyword):
                 return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}

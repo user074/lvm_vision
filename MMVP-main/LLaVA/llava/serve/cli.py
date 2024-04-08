@@ -96,7 +96,7 @@ def main(args):
                 images=image_tensor,
                 do_sample=True,
                 temperature=args.temperature,
-                max_new_tokens=args.max_new_tokens,
+                max_new_tokens=1024,
                 streamer=streamer,
                 use_cache=True,
                 stopping_criteria=[stopping_criteria])
@@ -123,3 +123,6 @@ if __name__ == "__main__":
     parser.add_argument("--image-aspect-ratio", type=str, default='pad')
     args = parser.parse_args()
     main(args)
+
+
+# python -m llava.serve.cli     --model-base lmsys/vicuna-7b-v1.5     --model-path /home/jianing/Github/lvm_vision/MMVP-main/LLaVA/checkpoints/llava-v1.5-7b-pretrain-2   --image-file "https://www.barnorama.com/wp-content/uploads/2016/12/03-Confusing-Pictures.jpg"

@@ -88,12 +88,72 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
                 model = LlavaMPTForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=cfg_pretrained, **kwargs)
             else:
                 tokenizer = AutoTokenizer.from_pretrained(model_base, use_fast=False)
-                cfg_pretrained = AutoConfig.from_pretrained(model_path)
+                from llava.model.language_model.llava_llama import LlavaConfig
+                cfg_pretrained = LlavaConfig.from_pretrained(model_path)
                 model = LlavaLlamaForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=cfg_pretrained, **kwargs)
 
             mm_projector_weights = torch.load(os.path.join(model_path, 'mm_projector.bin'), map_location='cpu')
             mm_projector_weights = {k: v.to(torch.float16) for k, v in mm_projector_weights.items()}
             model.load_state_dict(mm_projector_weights, strict=False)
+            
+
+            if os.path.exists(os.path.join(model_path, 'dino_mm_projector.bin')):
+                dino_mm_projector_weights = torch.load(os.path.join(model_path, 'dino_mm_projector.bin'), map_location='cpu')
+                def get_w(weights, keyword):
+                    return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
+                # dino_mm_projector_weights = {k: v.to(torch.float16) for k, v in dino_mm_projector_weights.items()}
+                model.model.dino_mm_projector.load_state_dict(get_w(dino_mm_projector_weights, 'dino_mm_projector'))
+
+            if os.path.exists(os.path.join(model_path, 'fusion_adapter.bin')):
+                fusion_adapter_weights = torch.load(os.path.join(model_path, 'fusion_adapter.bin'), map_location='cpu')
+                def get_w(weights, keyword):
+                    return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
+                #print out all the keys in the fusion adapter weights
+                # print("Fusion adapter weights keys")
+                # print(fusion_adapter_weights.keys())
+                # print("Model fusion adapter keys")
+                # print(model.model.fusion_adapter.state_dict().keys())
+                # fusion_adapter_weights = {k: v.to(torch.float16) for k, v in fusion_adapter_weights.items()}
+                # Check if all the required layers and weights are present in the aligned weights
+                # aligned_weights = get_w(fusion_adapter_weights, 'model.fusion_adapter')
+
+                # missing_keys = set(model.model.fusion_adapter.state_dict().keys()) - set(aligned_weights.keys())
+                # if missing_keys:
+                #     print(f"Missing keys in the saved weights: {missing_keys}")
+
+                model.model.fusion_adapter.load_state_dict(get_w(fusion_adapter_weights, 'fusion_adapter'))
+                # print(fusion_adapter_weights)
+
+            # mm_projector = model.get_model().mm_projector
+            # if mm_projector is not None:
+            #     print('MM projector is not None')
+            # #pass a dummy to test the mm projector
+            # dummy_input = torch.rand(1, 1, 1024, device=model.device, dtype=model.dtype)
+            # dummy_output_1 = mm_projector(dummy_input)
+            # print(dummy_output_1.shape)
+            # print('MM projector is loaded and tested...')
+            # #pass a dummy to test the dino mm projector
+            # dino_mm_projector = model.get_model().dino_mm_projector
+            # dummy_input = torch.rand(1, 1, 1024, device=model.device, dtype=model.dtype)
+            # dummy_output_2 = dino_mm_projector(dummy_input)
+            # print(dummy_output_2.shape)
+            # print('Dino MM projector is loaded and tested...')
+            # #test the fusion adopter by passing a dummy input
+            # fusion_adapter = model.get_model().fusion_adapter
+            # #print state dict keys and values
+            # # print(fusion_adapter.state_dict().keys())
+            # # print(fusion_adapter.state_dict().values())
+            # dummy_query = torch.rand(1, 10, 4096, device=model.device, dtype=model.dtype)
+            # dummy_key = torch.zeros(1, 10, 4096, device=model.device, dtype=model.dtype)
+            
+            # dummy_results = fusion_adapter(dummy_query, dummy_key)
+            # print(dummy_results.shape)
+            # print(dummy_results)
+            # print('Fusion adapter is loaded and tested...')
+            # # breakpoint()
+
+
+
         else:
             if 'mpt' in model_name.lower():
                 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)

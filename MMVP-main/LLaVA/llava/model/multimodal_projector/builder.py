@@ -54,6 +54,12 @@ class CrossAttention(nn.Module):
         # # Expand the dimensions of the query and key_value to match the expected shape
         # query_expanded = query.unsqueeze(1)  # Shape: (batch_size, 1, hidden_size)
         # key_value_expanded = key_value.unsqueeze(1)  # Shape: (batch_size, 1, hidden_size)
+        # Ensure query has the correct shape
+        if query.dim() == 4:
+            query = query.squeeze(1)  # Remove the extra dimension if present
+        # Ensure key_value has the correct shape
+        if key_value.dim() == 4:
+            key_value = key_value.squeeze(1)
         
         # Perform cross attention for each layer
         for layer in self.layers:
@@ -65,7 +71,7 @@ class CrossAttention(nn.Module):
         return output
 
 def build_vision_projector(config, delay_load=False, **kwargs):
-    projector_type = getattr(config, 'mm_projector_type', 'linear')
+    projector_type = getattr(config, 'mm_projector_type', 'mlp2x_gelu')
 
     if projector_type == 'linear':
         return nn.Linear(config.mm_hidden_size, config.hidden_size)
