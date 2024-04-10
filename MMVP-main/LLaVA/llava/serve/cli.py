@@ -126,3 +126,5 @@ if __name__ == "__main__":
 
 
 # python -m llava.serve.cli     --model-base lmsys/vicuna-7b-v1.5     --model-path /home/jianing/Github/lvm_vision/MMVP-main/LLaVA/checkpoints/llava-v1.5-7b-pretrain-2   --image-file "https://www.barnorama.com/wp-content/uploads/2016/12/03-Confusing-Pictures.jpg"
+
+# python -m llava.serve.cli     --model-base TinyLlama/TinyLlama-1.1B-Chat-v1.0     --model-path /home/jianing/Github/lvm_vision/MMVP-main/LLaVA/checkpoints/tinyLlama-1.1B-pretrain   --image-file "https://www.barnorama.com/wp-content/uploads/2016/12/03-Confusing-Pictures.jpg"

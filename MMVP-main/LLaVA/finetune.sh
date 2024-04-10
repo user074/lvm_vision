@@ -1,15 +1,14 @@
 #!/bin/bash
 deepspeed llava/train/train_mem.py \
-    --lora_enable True --lora_r 128 --lora_alpha 256 \
     --deepspeed /home/jianing/Github/lvm_vision/LLaVA-main/scripts/zero3.json\
-    --model_name_or_path lmsys/vicuna-7b-v1.5 \
+    --model_name_or_path TinyLlama/TinyLlama-1.1B-Chat-v1.0 \
     --version v1 \
     --data_path /home/jianing/Github/lvm_vision/Data/LLaVA-finetune/llava_v1_5_mix665k.json \
     --image_folder /home/jianing/Github/lvm_vision/Data/LLaVA-finetune \
     --vision_tower openai/clip-vit-large-patch14-336 \
-    --pretrain_mm_mlp_adapter /home/jianing/Github/lvm_vision/MMVP-main/LLaVA/checkpoints/llava-v1.5-7b-pretrain/mm_projector.bin \
-    --pretrain_dino_mm_mlp_adapter /home/jianing/Github/lvm_vision/MMVP-main/LLaVA/checkpoints/llava-v1.5-7b-pretrain/dino_mm_projector.bin \
-    --pretrain_fusion_adapter /home/jianing/Github/lvm_vision/MMVP-main/LLaVA/checkpoints/llava-v1.5-7b-pretrain/fusion_adapter.bin \
+    --pretrain_mm_mlp_adapter /home/jianing/Github/lvm_vision/MMVP-main/LLaVA/checkpoints/tinyLlama-1.1B-pretrain/mm_projector.bin \
+    --pretrain_dino_mm_mlp_adapter /home/jianing/Github/lvm_vision/MMVP-main/LLaVA/checkpoints/tinyLlama-1.1B-pretrain/dino_mm_projector.bin \
+    --pretrain_fusion_adapter /home/jianing/Github/lvm_vision/MMVP-main/LLaVA/checkpoints/tinyLlama-1.1B-pretrain/fusion_adapter.bin \
     --mm_projector_type mlp2x_gelu \
     --mm_adopter_type cross_attention_8x \
     --mm_vision_select_layer -2 \
@@ -17,7 +16,7 @@ deepspeed llava/train/train_mem.py \
     --mm_use_im_patch_token False \
     --image_aspect_ratio pad \
     --bf16 True \
-    --output_dir ./checkpoints/llava-v1.5-7b \
+    --output_dir ./checkpoints/tinyLlama-1.1B \
     --num_train_epochs 1 \
     --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 1 \
