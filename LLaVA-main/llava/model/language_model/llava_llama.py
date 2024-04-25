@@ -78,7 +78,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
                 past_key_values,
                 inputs_embeds,
                 labels
-            ) = self.prepare_inputs_labels_for_multimodal(
+            ) = self.prepare_inputs_labels_for_multimodal_withdino(
                 input_ids,
                 position_ids,
                 attention_mask,
@@ -122,7 +122,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
                 _,
                 inputs_embeds,
                 _
-            ) = self.prepare_inputs_labels_for_multimodal(
+            ) = self.prepare_inputs_labels_for_multimodal_withdino(
                 inputs,
                 position_ids,
                 attention_mask,

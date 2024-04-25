@@ -174,6 +174,8 @@ class LlavaMetaForCausalLM(ABC):
     
     def encode_images_with_cross_attn(self, feature_queries, feature_keys_values):
         cross_attention_features = self.get_model().get_vision_adaptor()(feature_queries, feature_keys_values)
+        #just do a dot product of the two features and maintain their shape
+        # cross_attention_features = feature_queries * feature_keys_values
         return cross_attention_features
 
 
@@ -200,7 +202,7 @@ class LlavaMetaForCausalLM(ABC):
         else:
             image_features_clip = self.encode_images_withclip(images)
             image_features_dino = self.encode_images_withdino(images)
-            fusion_features = self.encode_images_with_cross_attn(image_features_clip, image_features_dino)
+            fusion_features = self.encode_images_with_cross_attn(image_features_dino, image_features_clip)
 
 
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 deepspeed llava/train/train_mem.py \
-    --deepspeed /home/jianing/Github/lvm_vision/LLaVA-main/scripts/zero3.json\
+    --deepspeed /home/jianing/Github/lvm_vision/LLaVA-main/scripts/zero3_offload.json\
     --model_name_or_path TinyLlama/TinyLlama-1.1B-Chat-v1.0 \
     --version v1 \
     --data_path /home/jianing/Github/lvm_vision/Data/LLaVA-finetune/llava_v1_5_mix665k.json \
