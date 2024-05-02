@@ -4,8 +4,8 @@ deepspeed llava/train/train_mem.py \
     --deepspeed ./scripts/zero2.json \
     --model_name_or_path lmsys/vicuna-7b-v1.5 \
     --version plain \
-    --data_path ./Data/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json \
-    --image_folder ./Data/LLaVA-Pretrain/images \
+    --data_path /home/jianingqi/lvm_vision/Data/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json \
+    --image_folder /home/jianingqi/lvm_vision/Data/LLaVA-Pretrain/images \
     --vision_tower openai/clip-vit-large-patch14-336 \
     --mm_projector_type mlp2x_gelu \
     --tune_mm_mlp_adapter True \
@@ -22,7 +22,7 @@ deepspeed llava/train/train_mem.py \
     --save_strategy "steps" \
     --save_steps 5000 \
     --save_total_limit 1 \
-    --learning_rate 1e-3 \
+    --learning_rate 2e-3 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
     --lr_scheduler_type "cosine" \

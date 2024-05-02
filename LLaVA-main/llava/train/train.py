@@ -984,16 +984,50 @@ def train(attn_implementation=None):
 
     data_module = make_supervised_data_module(tokenizer=tokenizer,
                                               data_args=data_args)
+    # save callback
+    from transformers import TrainerCallback
+    class SaveCallback(TrainerCallback):
+        def on_save(self, args, state, control, **kwargs):
+            checkpoint_dir = os.path.join(args.output_dir, 'checkpoint-{}'.format(state.global_step))
+            if args.lora_enable:
+                state_dict = get_peft_state_maybe_zero_3(
+                    model.named_parameters(), training_args.lora_bias
+                )
+                non_lora_state_dict = get_peft_state_non_lora_maybe_zero_3(
+                    model.named_parameters()
+                )
+                if args.local_rank in [-1, 0]:
+                    model.config.save_pretrained(checkpoint_dir)
+                    model.save_pretrained(checkpoint_dir, state_dict=state_dict)
+                    torch.save(non_lora_state_dict, os.path.join(checkpoint_dir, 'non_lora_trainables.bin'))
+                    
     trainer = LLaVATrainer(model=model,
                     tokenizer=tokenizer,
                     args=training_args,
+                    callbacks=[SaveCallback()],
                     **data_module)
 
     if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
         trainer.train(resume_from_checkpoint=True)
     else:
         trainer.train()
+    print('training complete')
+    model.config.use_cache = True
+
+    if training_args.lora_enable:
+        state_dict = get_peft_state_maybe_zero_3(
+            model.named_parameters(), training_args.lora_bias
+        )
+        non_lora_state_dict = get_peft_state_non_lora_maybe_zero_3(
+            model.named_parameters()
+        )
+        if training_args.local_rank == 0 or training_args.local_rank == -1:
+            print(f"save models to {training_args.output_dir} ")
+            model.config.save_pretrained(training_args.output_dir)
+            model.save_pretrained(training_args.output_dir, state_dict=state_dict)
+            torch.save(non_lora_state_dict, os.path.join(training_args.output_dir, 'non_lora_trainables.bin'))
     trainer.save_state()
+    print('trainer save state')
 
     model.config.use_cache = True
 
@@ -1005,6 +1039,7 @@ def train(attn_implementation=None):
             model.named_parameters()
         )
         if training_args.local_rank == 0 or training_args.local_rank == -1:
+            print(f"save models to {training_args.output_dir} ")
             model.config.save_pretrained(training_args.output_dir)
             model.save_pretrained(training_args.output_dir, state_dict=state_dict)
             torch.save(non_lora_state_dict, os.path.join(training_args.output_dir, 'non_lora_trainables.bin'))

@@ -105,10 +105,13 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
             
             if os.path.exists(os.path.join(model_path, 'dino_mm_projector.bin')):
                 dino_mm_projector_weights = torch.load(os.path.join(model_path, 'dino_mm_projector.bin'), map_location='cpu')
-                def get_w(weights, keyword):
-                    return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
-                # dino_mm_projector_weights = {k: v.to(torch.float16) for k, v in dino_mm_projector_weights.items()}
-                model.model.dino_mm_projector.load_state_dict(get_w(dino_mm_projector_weights, 'dino_mm_projector'))
+                # def get_w(weights, keyword):
+                #     return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
+                
+                # model.model.dino_mm_projector.load_state_dict(get_w(dino_mm_projector_weights, 'dino_mm_projector'))
+                dino_mm_projector_weights = {k: v.to(torch.float16) for k, v in dino_mm_projector_weights.items()}
+                model.load_state_dict(dino_mm_projector_weights, strict=False)
+                print('loaded DINO projector')
                 
         else:
             if 'mpt' in model_name.lower():
@@ -167,7 +170,7 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
         
         dino_vision_tower = model.get_dino_vision_tower()
         if not dino_vision_tower.is_loaded:
-            dino_vision_tower.load_model(device_map=device_map)
+            dino_vision_tower.load_model()
             
         if device_map != 'auto':
             vision_tower.to(device=device_map, dtype=torch.float16)

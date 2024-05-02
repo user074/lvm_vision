@@ -141,6 +141,7 @@ class LlavaMetaModel:
                 return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
 
             self.dino_mm_projector.load_state_dict(get_w(dino_mm_projector_weights, 'dino_mm_projector'))
+            print('DINO projector loaded')
 
 
 def unpad_image(tensor, original_size):
@@ -293,7 +294,7 @@ class LlavaMetaForCausalLM(ABC):
         for batch_idx, cur_input_ids in enumerate(input_ids):
             num_images = (cur_input_ids == IMAGE_TOKEN_INDEX).sum()
             if num_images == 0:
-                cur_image_features = image_features[cur_image_idx]
+                cur_image_features = (0. * self.get_model().mm_projector(vision_tower.dummy_feature))
                 cur_input_embeds_1 = self.get_model().embed_tokens(cur_input_ids)
                 cur_input_embeds = torch.cat([cur_input_embeds_1, cur_image_features[0:0]], dim=0)
                 new_input_embeds.append(cur_input_embeds)
